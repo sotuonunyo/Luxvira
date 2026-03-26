@@ -1,3 +1,4 @@
+// FORCE REBUILD - 2026-03-26
 // 🚨 BUILD TEST - If you see this, the build ran successfully!
 console.log('🎯 CONTACT PAGE - BUILD VERSION: 3.0 - WhatsApp Integration Active');
 
