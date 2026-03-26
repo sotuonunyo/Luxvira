@@ -38,7 +38,7 @@ export default function Contact() {
         message: '✅ WhatsApp opened! Please send the message to complete.' 
       });
       
-      // Optional: Clear form after 3 seconds
+      // Clear form after 3 seconds
       setTimeout(() => {
         setFormData({ name: '', email: '', phone: '', type: '', message: '' });
       }, 3000);
@@ -194,7 +194,7 @@ export default function Contact() {
               border: 'none', 
               borderRadius: '8px', 
               fontWeight: 'bold',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'background 0.2s',
               display: 'flex',
@@ -221,18 +221,25 @@ export default function Contact() {
         </form>
       </div>
       
+      {/* Updated Company Information */}
       <div style={{ 
         textAlign: 'center', 
         color: '#666', 
         lineHeight: '2',
-        padding: '20px',
+        padding: '25px',
         background: '#fff',
         borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        marginTop: '30px'
       }}>
-        <p><strong>📱 WhatsApp:</strong> +234 803 799 1435</p>
-        <p><strong>🕒 Response Time:</strong> Mon-Sat, 9AM - 6PM WAT</p>
-        <p><strong>💡 Tip:</strong> Save our number to chat anytime!</p>
+        <h3 style={{ color: '#8B7355', marginBottom: '15px' }}>🏢 Luxvira Scents</h3>
+        <p><strong>📱 WhatsApp:</strong> <a href="https://wa.me/2348037991435" style={{ color: '#25D366', textDecoration: 'none' }}>+234 803 799 1435</a></p>
+        <p><strong>📧 Email:</strong> <a href="mailto:luxvirascents@gmail.com" style={{ color: '#8B7355' }}>luxvirascents@gmail.com</a></p>
+        <p><strong>🕒 Business Hours:</strong> Monday - Saturday, 9:00 AM - 6:00 PM (WAT)</p>
+        <p><strong>📍 Location:</strong> Nigeria</p>
+        <p style={{ marginTop: '15px', fontSize: '0.9rem', color: '#888' }}>
+          Handcrafted with love • Premium Home Fragrance & Decor
+        </p>
       </div>
       
       <div style={{ textAlign: 'center', marginTop: '30px' }}>
