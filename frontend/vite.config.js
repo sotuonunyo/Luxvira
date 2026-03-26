@@ -5,16 +5,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    // Ensure proper base path for Render
-    rollupOptions: {
-      output: {
-        manualChunks: undefined // Prevent chunking issues on free tier
-      }
-    }
+    sourcemap: false
   },
-  // Fix for client-side routing on Render
   server: {
-    historyApiFallback: true
+    host: true,
+    port: 5173
   }
 })
