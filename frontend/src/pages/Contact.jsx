@@ -1,3 +1,6 @@
+// 🚨 BUILD TEST - If you see this, the build ran successfully!
+console.log('🎯 CONTACT PAGE - BUILD VERSION: 3.0 - WhatsApp Integration Active');
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatWhatsAppMessage } from '../utils/whatsapp';
@@ -66,6 +69,11 @@ export default function Contact() {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Your Name *</label>
             <input type="text" name="name" value={formData.name} onChange={handleChange} required 
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* 🚨 BUILD TEST BANNER - Remove after confirming */}
+          <div style={{ background: '#ff6b6b', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold', marginBottom: '20px' }}>
+            🔄 FRESH BUILD v3.0 - WhatsApp Integration Active
           </div>
           
           <div>
