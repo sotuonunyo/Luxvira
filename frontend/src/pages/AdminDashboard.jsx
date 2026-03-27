@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  isAdminLoggedIn, 
-  logoutAdmin, 
-  getProducts, 
-  addProduct, 
-  updateProduct, 
-  deleteProduct, 
-  togglePublish 
+import {
+  isAdminLoggedIn,
+  logoutAdmin,
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  togglePublish
 } from '../utils/admin';
 
 export default function AdminDashboard() {
@@ -24,17 +24,16 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
-  // Check authentication
   useEffect(() => {
     if (!isAdminLoggedIn()) {
       navigate('/admin');
       return;
     }
     loadProducts();
-  }, []);
+  }, [navigate]);
 
-  const loadProducts = async () => {
-    const allProducts = await getProducts();
+  const loadProducts = () => {
+    const allProducts = getProducts();
     setProducts(allProducts);
   };
 
@@ -50,48 +49,27 @@ export default function AdminDashboard() {
     }));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!formData.name || !formData.price || !formData.image) {
-    setMessage({ type: 'error', text: 'Please fill all required fields' });
-    return;
-  }
-  const productData = {
-    ...formData,
-    price: parseFloat(formData.price),
-    image_url: formData.image  // Map to database field
-  };
-  delete productData.image;  // Remove frontend field
-  
-  let result;
-  if (editingProduct) {
-    result = await updateProduct(editingProduct.id, productData);
-    setMessage({ type: 'success', text: '✅ Product updated!' });
-  } else {
-    result = await addProduct(productData);
-    setMessage({ type: 'success', text: '✅ Product added!' });
-  }
-  
-  if (result.success || result.id) {
-    // Reset form
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.price || !formData.image) {
+      setMessage({ type: 'error', text: 'Please fill all required fields' });
+      return;
+    }
+    const productData = {
+      ...formData,
+      price: parseFloat(formData.price)
+    };
+    if (editingProduct) {
+      updateProduct(editingProduct.id, productData);
+      setMessage({ type: 'success', text: '✅ Product updated!' });
+    } else {
+      addProduct(productData);
+      setMessage({ type: 'success', text: '✅ Product added!' });
+    }
     setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
     setEditingProduct(null);
     setShowForm(false);
     loadProducts();
-    setTimeout(() => setMessage(null), 3000);
-  } else {
-    setMessage({ type: 'error', text: '❌ Failed to save product' });
-  }
-};
-
-
-    // Reset form
-    setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
-    setEditingProduct(null);
-    setShowForm(false);
-    loadProducts();
-    
-    // Clear message after 3 seconds
     setTimeout(() => setMessage(null), 3000);
   };
 
@@ -107,19 +85,17 @@ export default function AdminDashboard() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      const result = await deleteProduct(id);
-      if (result.success) {
-        setMessage({ type: 'success', text: '🗑️ Product deleted' });
-        loadProducts();
-        setTimeout(() => setMessage(null), 3000);
-      }
+      deleteProduct(id);
+      setMessage({ type: 'success', text: '🗑️ Product deleted' });
+      loadProducts();
+      setTimeout(() => setMessage(null), 3000);
     }
   };
-  
-  const handleTogglePublish = async (id) => {
-    await togglePublish(id);
+
+  const handleTogglePublish = (id) => {
+    togglePublish(id);
     loadProducts();
   };
 
@@ -127,11 +103,10 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: '30px',
         padding: '20px',
         background: '#8B7355',
@@ -158,7 +133,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Message Toast */}
       {message && (
         <div style={{
           padding: '15px',
@@ -173,7 +147,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Add Product Button */}
       <button
         onClick={() => {
           setShowForm(!showForm);
@@ -198,7 +171,6 @@ export default function AdminDashboard() {
         {showForm ? '✕ Cancel' : '➕ Add New Product'}
       </button>
 
-      {/* Product Form */}
       {showForm && (
         <div style={{
           background: 'white',
@@ -210,7 +182,6 @@ export default function AdminDashboard() {
           <h2 style={{ color: '#8B7355', marginTop: 0 }}>
             {editingProduct ? '✏️ Edit Product' : '🆕 Add New Product'}
           </h2>
-          
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
@@ -233,7 +204,6 @@ export default function AdminDashboard() {
                 }}
               />
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
@@ -259,7 +229,6 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
                   Price (₦) *
@@ -284,7 +253,6 @@ export default function AdminDashboard() {
                 />
               </div>
             </div>
-
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
                 Image URL (Cloudinary) *
@@ -309,7 +277,6 @@ export default function AdminDashboard() {
                 💡 Tip: Use Cloudinary URL with /w_600,h_600,c_fill,q_auto,f_auto/ for best results
               </p>
             </div>
-
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
                 Description
@@ -332,7 +299,6 @@ export default function AdminDashboard() {
                 }}
               />
             </div>
-
             <button
               type="submit"
               style={{
@@ -353,12 +319,10 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Products Table */}
       <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid #eee' }}>
           <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({products.length})</h2>
         </div>
-        
         {products.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
             <p>No products yet. Click "Add New Product" to get started!</p>
@@ -380,8 +344,8 @@ export default function AdminDashboard() {
                 {products.map(product => (
                   <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '15px' }}>
-                      <img 
-                        src={product.image} 
+                      <img
+                        src={product.image}
                         alt={product.name}
                         style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', background: '#f5f5f5' }}
                       />
