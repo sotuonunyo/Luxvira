@@ -1,3 +1,4 @@
+// import { signInWithGoogle, signOutUser, ... } from '../firebase';
 // ===== TEMPORARY TEST MODE =====
 // Set to true to bypass Firebase and test the app
 const TEST_MODE = true; 
