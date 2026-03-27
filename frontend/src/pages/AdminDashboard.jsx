@@ -10,6 +10,50 @@ import {
   togglePublish 
 } from '../utils/admin';
 
+// Add this inside the component, before the return:
+const adminUser = getCurrentAdmin();
+
+{/* Replace the header div with this */}
+<div style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  marginBottom: '30px',
+  padding: '20px',
+  background: '#8B7355',
+  color: 'white',
+  borderRadius: '12px'
+}}>
+  <div>
+    <h1 style={{ margin: 0 }}>🛠️ Admin Dashboard</h1>
+    <p style={{ margin: '5px 0 0', opacity: 0.9 }}>
+      Welcome, {adminUser?.name || adminUser?.email} ✨
+    </p>
+  </div>
+  <button
+    onClick={handleLogout}
+    style={{
+      padding: '10px 20px',
+      background: 'rgba(255,255,255,0.2)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontWeight: '500',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    }}
+  >
+    <img 
+      src={adminUser?.photo} 
+      alt="" 
+      style={{ width: '24px', height: '24px', borderRadius: '50%' }} 
+    />
+    Logout
+  </button>
+</div>
+
 export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
