@@ -1,8 +1,16 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Products from './pages/Products'
 import Cart from './pages/Cart'
 import Contact from './pages/Contact'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
+import { isAdminLoggedIn } from './utils/admin'
+
+// Protected route component
+function AdminRoute({ children }) {
+  return isAdminLoggedIn() ? children : <Navigate to="/admin" />;
+}
 
 export default function App() {
   return (
@@ -30,6 +38,7 @@ export default function App() {
           <Link to="/products" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Products</Link>
           <Link to="/cart" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Cart</Link>
           <Link to="/contact" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Contact</Link>
+          <Link to="/admin/dashboard" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>🛠️ Admin</Link>
         </nav>
         
         <main>
@@ -38,6 +47,15 @@ export default function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
           </Routes>
         </main>
         
