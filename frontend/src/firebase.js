@@ -8,12 +8,12 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 
-// 🔐 REPLACE WITH YOUR ACTUAL FIREBASE CONFIG FROM STEP 1C
+// 🔐 YOUR FIREBASE CONFIG - Replace with actual values from Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyBUPTerCYPEAZVsgNtoAndGZKSwkTTgstA",
   authDomain: "luxvira-scents-admin.firebaseapp.com",
   projectId: "luxvira-scents-admin",
-  storageBucket: "luxvira-scents-admin.firebasestorage.app",
+  storageBucket: "luxvira-scents-admin.appspot.com",
   messagingSenderId: "702571915333",
   appId: "1:702571915333:web:7c510a24e1d781ab8a1b2c"
 };
@@ -44,7 +44,7 @@ export const signInWithGoogle = async () => {
       await signOut(auth);
       return { 
         success: false, 
-        error: 'Access denied. Only authorized accounts can access Admin panel.' 
+        error: 'Access denied. Only authorized accounts can access admin panel.' 
       };
     }
     
@@ -85,7 +85,7 @@ export const onAuthStateChange = (callback) => {
   });
 };
 
-// Get current user (sync check)
+// ✅ Get current user (sync check) - EXPORTED
 export const getCurrentUser = () => {
   const user = auth.currentUser;
   if (user && isAdminEmail(user.email)) {
