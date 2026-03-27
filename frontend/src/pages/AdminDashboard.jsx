@@ -33,8 +33,8 @@ export default function AdminDashboard() {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
-    const allProducts = getProducts();
+  const loadProducts = async () => {
+    const allProducts = await getProducts();
     setProducts(allProducts);
   };
 
@@ -50,26 +50,40 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.price || !formData.image) {
-      setMessage({ type: 'error', text: 'Please fill all required fields' });
-      return;
-    }
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!formData.name || !formData.price || !formData.image) {
+    setMessage({ type: 'error', text: 'Please fill all required fields' });
+    return;
+  }
+  const productData = {
+    ...formData,
+    price: parseFloat(formData.price),
+    image_url: formData.image  // Map to database field
+  };
+  delete productData.image;  // Remove frontend field
+  
+  let result;
+  if (editingProduct) {
+    result = await updateProduct(editingProduct.id, productData);
+    setMessage({ type: 'success', text: '✅ Product updated!' });
+  } else {
+    result = await addProduct(productData);
+    setMessage({ type: 'success', text: '✅ Product added!' });
+  }
+  
+  if (result.success || result.id) {
+    // Reset form
+    setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
+    setEditingProduct(null);
+    setShowForm(false);
+    loadProducts();
+    setTimeout(() => setMessage(null), 3000);
+  } else {
+    setMessage({ type: 'error', text: '❌ Failed to save product' });
+  }
+};
 
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price)
-    };
-
-    if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
-      setMessage({ type: 'success', text: '✅ Product updated!' });
-    } else {
-      addProduct(productData);
-      setMessage({ type: 'success', text: '✅ Product added!' });
-    }
 
     // Reset form
     setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
@@ -93,17 +107,19 @@ export default function AdminDashboard() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(id);
-      setMessage({ type: 'success', text: '🗑️ Product deleted' });
-      loadProducts();
-      setTimeout(() => setMessage(null), 3000);
+      const result = await deleteProduct(id);
+      if (result.success) {
+        setMessage({ type: 'success', text: '🗑️ Product deleted' });
+        loadProducts();
+        setTimeout(() => setMessage(null), 3000);
+      }
     }
   };
-
-  const handleTogglePublish = (id) => {
-    togglePublish(id);
+  
+  const handleTogglePublish = async (id) => {
+    await togglePublish(id);
     loadProducts();
   };
 
