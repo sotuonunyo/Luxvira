@@ -32,7 +32,18 @@ export const getProducts = async () => {
     const url = `${API_URL}/api/products${isAdmin ? '?showUnpublished=true' : ''}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch');
-    return await response.json();
+    const data = await response.json();
+    
+    // Map database fields to frontend fields
+    return data.map(p => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: parseFloat(p.price),
+      image: p.image_url,
+      description: p.description,
+      isPublished: p.is_published
+    }));
   } catch (err) {
     console.error('Error fetching products:', err);
     return [];
@@ -45,10 +56,26 @@ export const addProduct = async (product) => {
     const response = await fetch(`${API_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product)
+      body: JSON.stringify({
+        ...product,
+        image_url: product.image
+      })
     });
     if (!response.ok) throw new Error('Failed to add');
-    return await response.json();
+    const data = await response.json();
+    
+    return {
+      success: true,
+      product: {
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        price: parseFloat(data.price),
+        image: data.image_url,
+        description: data.description,
+        isPublished: data.is_published
+      }
+    };
   } catch (err) {
     console.error('Error adding product:', err);
     return { success: false, error: err.message };
@@ -61,10 +88,26 @@ export const updateProduct = async (id, updates) => {
     const response = await fetch(`${API_URL}/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
+      body: JSON.stringify({
+        ...updates,
+        image_url: updates.image
+      })
     });
     if (!response.ok) throw new Error('Failed to update');
-    return await response.json();
+    const data = await response.json();
+    
+    return {
+      success: true,
+      product: {
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        price: parseFloat(data.price),
+        image: data.image_url,
+        description: data.description,
+        isPublished: data.is_published
+      }
+    };
   } catch (err) {
     console.error('Error updating product:', err);
     return { success: false, error: err.message };
@@ -92,7 +135,7 @@ export const togglePublish = async (id) => {
     const product = products.find(p => p.id === id);
     if (!product) return { success: false, error: 'Product not found' };
     
-    return await updateProduct(id, { is_published: !product.is_published });
+    return await updateProduct(id, { is_published: !product.isPublished });
   } catch (err) {
     console.error('Error toggling publish:', err);
     return { success: false, error: err.message };
