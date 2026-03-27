@@ -1,3 +1,23 @@
+// ===== TEMPORARY TEST MODE =====
+// Set to true to bypass Firebase and test the app
+const TEST_MODE = true; 
+
+if (TEST_MODE) {
+  export const isAdminLoggedIn = () => true;
+  export const getCurrentAdmin = () => ({ 
+    email: 'test@luxvira.com', 
+    name: 'Test Admin',
+    photo: null 
+  });
+  export const loginAdmin = async () => ({ success: true });
+  export const logoutAdmin = async () => {};
+  export const subscribeToAuth = (callback) => {
+    callback({ loggedIn: true, user: { email: 'test@luxvira.com', name: 'Test' } });
+    return () => {};
+  };
+  // Continue with product functions below...
+}
+
 // Admin utilities - Firebase Auth integrated
 import { 
   signInWithGoogle, 
