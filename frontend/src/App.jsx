@@ -38,7 +38,6 @@ export default function App() {
           <Link to="/products" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Products</Link>
           <Link to="/cart" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Cart</Link>
           <Link to="/contact" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>Contact</Link>
-          <Link to="/admin/dashboard" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>🛠️ Admin</Link>
         </nav>
         
         <main>
@@ -60,7 +59,7 @@ export default function App() {
         </main>
         
         <footer style={{ padding: '20px', textAlign: 'center', background: '#f5f5f5', marginTop: '40px' }}>
-          <p>© 2026 Luxvira Scents. All rights reserved.</p>
+          <p><Link to="/admin/dashboard" style={{ margin: '0 15px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>©</Link> 2026 Luxvira Scents. All rights reserved.</p>
         </footer>
       </div>
     </BrowserRouter>
