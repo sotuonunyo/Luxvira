@@ -1,67 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { getProducts, isAdminLoggedIn } from '../utils/admin';
 
-const SAMPLE_PRODUCTS = [
+// Default sample products (fallback if no custom products)
+const DEFAULT_PRODUCTS = [
   {
     id: 1,
     name: 'Lavender Dream Diffuser',
     category: 'diffusers',
     price: 4500,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535085/IMG_2627_bg39tl.jpg',
-    description: 'Handcrafted reed diffuser with calming lavender scent. Lasts 60+ days.'
+    image: 'https://via.placeholder.com/300x300/8B7355/FFFFFF?text=Lavender+Diffuser',
+    description: 'Handcrafted reed diffuser with calming lavender scent. Lasts 60+ days.',
+    isPublished: true
   },
   {
     id: 2,
     name: 'Vanilla Bean Candle',
     category: 'candles',
     price: 3200,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535084/IMG_2623_ctokoa.jpg',
-    description: 'Soy wax candle with pure vanilla essence. 40-hour burn time.'
+    image: 'https://via.placeholder.com/300x300/F5E6D3/333333?text=Vanilla+Candle',
+    description: 'Soy wax candle with pure vanilla essence. 40-hour burn time.',
+    isPublished: true
   },
   {
     id: 3,
     name: 'Rose Gold Gypsum Tray',
     category: 'gypsum',
     price: 5800,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535083/IMG_2615_fm63ss.jpg',
-    description: 'Elegant hand-poured gypsum tray with rose gold accents.'
-  },
-  {
-    id: 4,
-    name: 'Eucalyptus Mist Diffuser',
-    category: 'diffusers',
-    price: 4500,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535081/IMG_2618_pzlnal.jpg',
-    description: 'Refreshing eucalyptus scent in a minimalist glass bottle.'
-  },
-  {
-    id: 5,
-    name: 'Sandalwood Luxury Candle',
-    category: 'candles',
-    price: 4200,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535079/IMG_2609_hq9srj.jpg',
-    description: 'Premium soy candle with warm sandalwood and amber notes.'
-  },
-  {
-    id: 6,
-    name: 'Marble Effect Gypsum Vase',
-    category: 'gypsum',
-    price: 6500,
-    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535076/IMG_2605_elbjg2.jpg',
-    description: 'Stunning marble-effect gypsum vase for dried flowers or decor.'
+    image: 'https://via.placeholder.com/300x300/D4AF37/FFFFFF?text=Gypsum+Tray',
+    description: 'Elegant hand-poured gypsum tray with rose gold accents.',
+    isPublished: true
   }
 ];
 
 export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [allProducts, setAllProducts] = useState([]);
   const { addToCart, cartCount } = useCart();
+
+  // Load products from localStorage (admin-added) or use defaults
+  useEffect(() => {
+    const customProducts = getProducts();
+    if (customProducts.length > 0) {
+      setAllProducts(customProducts);
+    } else {
+      setAllProducts(DEFAULT_PRODUCTS);
+    }
+  }, []);
 
   const categories = ['all', 'diffusers', 'candles', 'gypsum', 'decor'];
   
-  const filteredProducts = selectedCategory === 'all'
-    ? SAMPLE_PRODUCTS
-    : SAMPLE_PRODUCTS.filter(p => p.category === selectedCategory);
+  // Filter: show only published products (unless admin is logged in)
+  const filteredProducts = allProducts
+    .filter(p => isAdminLoggedIn() || p.isPublished !== false)
+    .filter(p => selectedCategory === 'all' || p.category === selectedCategory);
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
@@ -97,69 +90,98 @@ export default function Products() {
         ))}
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '25px'
-      }}>
-        {filteredProducts.map(product => (
-          <div key={product.id} style={{
-            background: 'white',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            transition: 'transform 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              style={{
-                width: '100%',
-                height: '250px',
-                objectFit: 'cover',
-                background: '#f9f9f9'
-              }}
-            />
-            <div style={{ padding: '20px' }}>
-              <h3 style={{ margin: '0 0 8px', color: '#333', fontSize: '1.1rem' }}>
-                {product.name}
-              </h3>
-              <p style={{ margin: '0 0 12px', color: '#666', fontSize: '0.95rem', minHeight: '40px' }}>
-                {product.description}
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ 
-                  fontSize: '1.3rem', 
-                  fontWeight: 'bold', 
-                  color: '#8B7355' 
+      {filteredProducts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+          <p style={{ fontSize: '1.2rem' }}>No products in this category yet.</p>
+          {isAdminLoggedIn() && (
+            <Link to="/admin/dashboard" style={{ color: '#8B7355', fontWeight: 'bold' }}>
+              Add products in Admin Panel →
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '25px'
+        }}>
+          {filteredProducts.map(product => (
+            <div key={product.id} style={{
+              background: 'white',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              transition: 'transform 0.2s',
+              position: 'relative'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              {/* Unpublished badge for admin */}
+              {isAdminLoggedIn() && !product.isPublished && (
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  background: '#f44336',
+                  color: 'white',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold'
                 }}>
-                  ₦{product.price.toLocaleString()}
-                </span>
-                <button
-                  onClick={() => {
-                    addToCart(product);
-                    alert(`✅ ${product.name} added to cart!`);
-                  }}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#8B7355',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  Add to Cart
-                </button>
+                  ⏸️ Unpublished
+                </div>
+              )}
+              
+              <img
+                src={product.image}
+                alt={product.name}
+                style={{
+                  width: '100%',
+                  height: '250px',
+                  objectFit: 'cover',
+                  background: '#f9f9f9'
+                }}
+              />
+              <div style={{ padding: '20px' }}>
+                <h3 style={{ margin: '0 0 8px', color: '#333', fontSize: '1.1rem' }}>
+                  {product.name}
+                </h3>
+                <p style={{ margin: '0 0 12px', color: '#666', fontSize: '0.95rem', minHeight: '40px' }}>
+                  {product.description}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ 
+                    fontSize: '1.3rem', 
+                    fontWeight: 'bold', 
+                    color: '#8B7355' 
+                  }}>
+                    ₦{product.price?.toLocaleString()}
+                  </span>
+                  <button
+                    onClick={() => {
+                      addToCart(product);
+                      alert(`✅ ${product.name} added to cart!`);
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      background: '#8B7355',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {cartCount > 0 && (
         <div style={{
