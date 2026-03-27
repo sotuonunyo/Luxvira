@@ -9,12 +9,12 @@ import {
 
 const PRODUCTS_STORAGE_KEY = 'luxvira_products';
 
-// Check if admin is logged in (via Firebase)
+// ✅ Check if admin is logged in (via Firebase)
 export const isAdminLoggedIn = () => {
   return getCurrentUser() !== null;
 };
 
-// Get current admin user
+// ✅ Get current admin user - PROPERLY EXPORTED
 export const getCurrentAdmin = () => {
   return getCurrentUser();
 };
@@ -63,7 +63,6 @@ export const addProduct = (product) => {
     isPublished: product.isPublished !== false
   };
   
-  // Update or add
   const existingIndex = products.findIndex(p => p.id === newProduct.id);
   if (existingIndex >= 0) {
     products[existingIndex] = newProduct;
