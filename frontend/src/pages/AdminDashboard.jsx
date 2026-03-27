@@ -7,7 +7,8 @@ import {
   addProduct, 
   updateProduct, 
   deleteProduct, 
-  togglePublish 
+  togglePublish,
+  getCurrentAdmin 
 } from '../utils/admin';
 
 // Add this inside the component, before the return:
