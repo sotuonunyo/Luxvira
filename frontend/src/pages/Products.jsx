@@ -8,7 +8,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Lavender Dream Diffuser',
     category: 'diffusers',
     price: 4500,
-    image: 'https://via.placeholder.com/300x300/8B7355/FFFFFF?text=Lavender+Diffuser',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535085/IMG_2627_bg39tl.jpg',
     description: 'Handcrafted reed diffuser with calming lavender scent. Lasts 60+ days.'
   },
   {
@@ -16,7 +16,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Vanilla Bean Candle',
     category: 'candles',
     price: 3200,
-    image: 'https://via.placeholder.com/300x300/F5E6D3/333333?text=Vanilla+Candle',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535084/IMG_2623_ctokoa.jpg',
     description: 'Soy wax candle with pure vanilla essence. 40-hour burn time.'
   },
   {
@@ -24,7 +24,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Rose Gold Gypsum Tray',
     category: 'gypsum',
     price: 5800,
-    image: 'https://via.placeholder.com/300x300/D4AF37/FFFFFF?text=Gypsum+Tray',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535083/IMG_2615_fm63ss.jpg',
     description: 'Elegant hand-poured gypsum tray with rose gold accents.'
   },
   {
@@ -32,7 +32,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Eucalyptus Mist Diffuser',
     category: 'diffusers',
     price: 4500,
-    image: 'https://via.placeholder.com/300x300/8B7355/FFFFFF?text=Eucalyptus+Diffuser',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535081/IMG_2618_pzlnal.jpg',
     description: 'Refreshing eucalyptus scent in a minimalist glass bottle.'
   },
   {
@@ -40,7 +40,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Sandalwood Luxury Candle',
     category: 'candles',
     price: 4200,
-    image: 'https://via.placeholder.com/300x300/F5E6D3/333333?text=Sandalwood+Candle',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535079/IMG_2609_hq9srj.jpg',
     description: 'Premium soy candle with warm sandalwood and amber notes.'
   },
   {
@@ -48,7 +48,7 @@ const SAMPLE_PRODUCTS = [
     name: 'Marble Effect Gypsum Vase',
     category: 'gypsum',
     price: 6500,
-    image: 'https://via.placeholder.com/300x300/D4AF37/FFFFFF?text=Gypsum+Vase',
+    image: 'https://res.cloudinary.com/dzbfrzlfu/image/upload/v1774535076/IMG_2605_elbjg2.jpg',
     description: 'Stunning marble-effect gypsum vase for dried flowers or decor.'
   }
 ];
