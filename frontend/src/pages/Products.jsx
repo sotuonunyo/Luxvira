@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { getProducts, isAdminLoggedIn } from '../utils/admin';
 
-// Default sample products (fallback if no custom products)
+// Default sample products (fallback if API fails)
 const DEFAULT_PRODUCTS = [
   {
     id: 1,
@@ -37,24 +37,52 @@ const DEFAULT_PRODUCTS = [
 export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart, cartCount } = useCart();
 
-  // Load products from localStorage (admin-added) or use defaults
+  // Load products from database API
   useEffect(() => {
-    const customProducts = getProducts();
-    if (customProducts.length > 0) {
-      setAllProducts(customProducts);
-    } else {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const products = await getProducts();
+      if (products && products.length > 0) {
+        // Map database fields to frontend fields
+        setAllProducts(products.map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: parseFloat(p.price),
+          image: p.image_url,
+          description: p.description,
+          isPublished: p.is_published
+        })));
+      } else {
+        setAllProducts(DEFAULT_PRODUCTS);
+      }
+    } catch (err) {
+      console.error('Failed to load products:', err);
       setAllProducts(DEFAULT_PRODUCTS);
     }
-  }, []);
+    setLoading(false);
+  };
 
   const categories = ['all', 'diffusers', 'candles', 'gypsum', 'decor'];
   
-  // Filter: show only published products (unless admin is logged in)
   const filteredProducts = allProducts
     .filter(p => isAdminLoggedIn() || p.isPublished !== false)
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory);
+
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'Arial' }}>
+        <p>Loading products...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
@@ -63,10 +91,10 @@ export default function Products() {
         <p style={{ color: '#666' }}>Handcrafted with love in Nigeria ✨</p>
       </div>
 
-      <div style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        justifyContent: 'center', 
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        justifyContent: 'center',
         marginBottom: '30px',
         flexWrap: 'wrap'
       }}>
@@ -117,7 +145,6 @@ export default function Products() {
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              {/* Unpublished badge for admin */}
               {isAdminLoggedIn() && !product.isPublished && (
                 <div style={{
                   position: 'absolute',
@@ -152,10 +179,10 @@ export default function Products() {
                   {product.description}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ 
-                    fontSize: '1.3rem', 
-                    fontWeight: 'bold', 
-                    color: '#8B7355' 
+                  <span style={{
+                    fontSize: '1.3rem',
+                    fontWeight: 'bold',
+                    color: '#8B7355'
                   }}>
                     ₦{product.price?.toLocaleString()}
                   </span>
