@@ -11,9 +11,6 @@ import {
   getCurrentAdmin 
 } from '../utils/admin';
 
-// Add this inside the component, before the return:
-const adminUser = getCurrentAdmin();
-
 {/* Replace the header div with this */}
 <div style={{ 
   display: 'flex', 
@@ -56,6 +53,8 @@ const adminUser = getCurrentAdmin();
 </div>
 
 export default function AdminDashboard() {
+  // ✅ Get admin user info
+  const adminUser = getCurrentAdmin();
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
