@@ -44,7 +44,7 @@ export const signInWithGoogle = async () => {
       await signOut(auth);
       return { 
         success: false, 
-        error: 'Access denied. Only authorized accounts can access admin panel.' 
+        error: 'Access denied. Only authorized accounts can access Admin panel.' 
       };
     }
     
