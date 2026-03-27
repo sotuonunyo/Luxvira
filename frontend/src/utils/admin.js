@@ -1,24 +1,3 @@
-// import { signInWithGoogle, signOutUser, ... } from '../firebase';
-// ===== TEMPORARY TEST MODE =====
-// Set to true to bypass Firebase and test the app
-const TEST_MODE = true; 
-
-if (TEST_MODE) {
-  export const isAdminLoggedIn = () => true;
-  export const getCurrentAdmin = () => ({ 
-    email: 'test@luxvira.com', 
-    name: 'Test Admin',
-    photo: null 
-  });
-  export const loginAdmin = async () => ({ success: true });
-  export const logoutAdmin = async () => {};
-  export const subscribeToAuth = (callback) => {
-    callback({ loggedIn: true, user: { email: 'test@luxvira.com', name: 'Test' } });
-    return () => {};
-  };
-  // Continue with product functions below...
-}
-
 // Admin utilities - Firebase Auth integrated
 import { 
   signInWithGoogle, 
@@ -30,27 +9,24 @@ import {
 
 const PRODUCTS_STORAGE_KEY = 'luxvira_products';
 
-// ✅ Check if admin is logged in (via Firebase)
+// ===== AUTH FUNCTIONS (Always exported at top level) =====
+
 export const isAdminLoggedIn = () => {
   return getCurrentUser() !== null;
 };
 
-// ✅ Get current admin user - PROPERLY EXPORTED
 export const getCurrentAdmin = () => {
   return getCurrentUser();
 };
 
-// Login via Google (returns promise)
 export const loginAdmin = async () => {
   return await signInWithGoogle();
 };
 
-// Logout
 export const logoutAdmin = async () => {
   await signOutUser();
 };
 
-// Subscribe to auth changes
 export const subscribeToAuth = (callback) => {
   return onAuthStateChange(callback);
 };
