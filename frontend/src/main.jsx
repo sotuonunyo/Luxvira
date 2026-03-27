@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 
+console.log('🚀 main.jsx executing');
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <CartProvider>
