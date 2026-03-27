@@ -41,23 +41,9 @@ export default function AdminDashboard() {
     loadProducts();
   }, [navigate]);
 
-  const loadProducts = () => {
-    console.log('📦 Loading products...');
-    try {
-      const allProducts = getProducts();
-      console.log('✅ Products loaded:', allProducts);
-      console.log('📊 Product count:', allProducts.length);
-      setProducts(allProducts);
-      setDebugInfo({
-        loggedIn: isAdminLoggedIn(),
-        productCount: allProducts.length,
-        localStorage: localStorage.getItem('luxvira_products') ? 'Has data' : 'Empty'
-      });
-    } catch (err) {
-      console.error('❌ Error loading products:', err);
-      setMessage({ type: 'error', text: 'Failed to load products: ' + err.message });
-    }
-    setLoading(false);
+  const loadProducts = async () => {
+    const allProducts = await getProducts();
+    setProducts(allProducts);
   };
 
   const handleLogout = () => {
@@ -73,35 +59,36 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('📝 Form submitted:', formData);
-    
     if (!formData.name || !formData.price || !formData.image) {
       setMessage({ type: 'error', text: 'Please fill all required fields' });
       return;
     }
     
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price)
-    };
-    
+  const productData = {
+    ...formData,
+    price: parseFloat(formData.price)
+  };
+  
+    let result;
     if (editingProduct) {
-      console.log('✏️ Updating product:', editingProduct.id);
-      updateProduct(editingProduct.id, productData);
+      result = await updateProduct(editingProduct.id, productData);
       setMessage({ type: 'success', text: '✅ Product updated!' });
     } else {
-      console.log('➕ Adding new product');
-      addProduct(productData);
+      result = await addProduct(productData);
       setMessage({ type: 'success', text: '✅ Product added!' });
     }
     
-    setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
-    setEditingProduct(null);
-    setShowForm(false);
-    loadProducts();
-    setTimeout(() => setMessage(null), 3000);
+    if (result.success) {
+      setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
+      setEditingProduct(null);
+      setShowForm(false);
+      loadProducts();
+      setTimeout(() => setMessage(null), 3000);
+    } else {
+      setMessage({ type: 'error', text: '❌ Failed: ' + result.error });
+    }
   };
 
   const handleEdit = (product) => {
@@ -117,19 +104,19 @@ export default function AdminDashboard() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      console.log('🗑️ Deleting product:', id);
-      deleteProduct(id);
-      setMessage({ type: 'success', text: '🗑️ Product deleted' });
-      loadProducts();
-      setTimeout(() => setMessage(null), 3000);
+      const result = await deleteProduct(id);
+      if (result.success) {
+        setMessage({ type: 'success', text: '🗑️ Product deleted' });
+        loadProducts();
+        setTimeout(() => setMessage(null), 3000);
+      }
     }
   };
 
-  const handleTogglePublish = (id) => {
-    console.log('🔄 Toggling publish:', id);
-    togglePublish(id);
+  const handleTogglePublish = async (id) => {
+    await togglePublish(id);
     loadProducts();
   };
 
