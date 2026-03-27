@@ -22,22 +22,46 @@ export default function AdminDashboard() {
     description: ''
   });
   const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState({});
   const navigate = useNavigate();
 
+  // Debug: Log on mount
   useEffect(() => {
+    console.log('🎯 AdminDashboard mounting...');
+    console.log('🔐 isAdminLoggedIn:', isAdminLoggedIn());
+    
     if (!isAdminLoggedIn()) {
+      console.log('❌ Not logged in, redirecting to /admin');
       navigate('/admin');
       return;
     }
+    
+    console.log('✅ Logged in, loading products...');
     loadProducts();
   }, [navigate]);
 
   const loadProducts = () => {
-    const allProducts = getProducts();
-    setProducts(allProducts);
+    console.log('📦 Loading products...');
+    try {
+      const allProducts = getProducts();
+      console.log('✅ Products loaded:', allProducts);
+      console.log('📊 Product count:', allProducts.length);
+      setProducts(allProducts);
+      setDebugInfo({
+        loggedIn: isAdminLoggedIn(),
+        productCount: allProducts.length,
+        localStorage: localStorage.getItem('luxvira_products') ? 'Has data' : 'Empty'
+      });
+    } catch (err) {
+      console.error('❌ Error loading products:', err);
+      setMessage({ type: 'error', text: 'Failed to load products: ' + err.message });
+    }
+    setLoading(false);
   };
 
   const handleLogout = () => {
+    console.log('🔐 Logging out...');
     logoutAdmin();
     navigate('/');
   };
@@ -51,21 +75,28 @@ export default function AdminDashboard() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('📝 Form submitted:', formData);
+    
     if (!formData.name || !formData.price || !formData.image) {
       setMessage({ type: 'error', text: 'Please fill all required fields' });
       return;
     }
+    
     const productData = {
       ...formData,
       price: parseFloat(formData.price)
     };
+    
     if (editingProduct) {
+      console.log('✏️ Updating product:', editingProduct.id);
       updateProduct(editingProduct.id, productData);
       setMessage({ type: 'success', text: '✅ Product updated!' });
     } else {
+      console.log('➕ Adding new product');
       addProduct(productData);
       setMessage({ type: 'success', text: '✅ Product added!' });
     }
+    
     setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
     setEditingProduct(null);
     setShowForm(false);
@@ -74,6 +105,7 @@ export default function AdminDashboard() {
   };
 
   const handleEdit = (product) => {
+    console.log('✏️ Editing product:', product);
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -87,6 +119,7 @@ export default function AdminDashboard() {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
+      console.log('🗑️ Deleting product:', id);
       deleteProduct(id);
       setMessage({ type: 'success', text: '🗑️ Product deleted' });
       loadProducts();
@@ -95,14 +128,32 @@ export default function AdminDashboard() {
   };
 
   const handleTogglePublish = (id) => {
+    console.log('🔄 Toggling publish:', id);
     togglePublish(id);
     loadProducts();
   };
 
   const categories = ['diffusers', 'candles', 'gypsum', 'decor'];
 
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'Arial' }}>
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
+      {/* Debug Info (remove after fixing) */}
+      <div style={{ background: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.85rem' }}>
+        <strong>🔍 Debug Info:</strong>
+        <pre style={{ margin: '10px 0 0', overflow: 'auto' }}>{JSON.stringify(debugInfo, null, 2)}</pre>
+        <p style={{ margin: '10px 0 0', color: '#666' }}>Check browser console (F12) for more details</p>
+      </div>
+
+      {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -133,6 +184,7 @@ export default function AdminDashboard() {
         </button>
       </div>
 
+      {/* Message Toast */}
       {message && (
         <div style={{
           padding: '15px',
@@ -147,6 +199,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Add Product Button */}
       <button
         onClick={() => {
           setShowForm(!showForm);
@@ -171,6 +224,7 @@ export default function AdminDashboard() {
         {showForm ? '✕ Cancel' : '➕ Add New Product'}
       </button>
 
+      {/* Product Form */}
       {showForm && (
         <div style={{
           background: 'white',
@@ -273,9 +327,6 @@ export default function AdminDashboard() {
                   boxSizing: 'border-box'
                 }}
               />
-              <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
-                💡 Tip: Use Cloudinary URL with /w_600,h_600,c_fill,q_auto,f_auto/ for best results
-              </p>
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
@@ -319,6 +370,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Products Table */}
       <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid #eee' }}>
           <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({products.length})</h2>
@@ -326,6 +378,7 @@ export default function AdminDashboard() {
         {products.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
             <p>No products yet. Click "Add New Product" to get started!</p>
+            <p style={{ fontSize: '0.85rem', marginTop: '10px' }}>Products are stored in localStorage</p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
