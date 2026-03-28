@@ -40,24 +40,43 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const { addToCart, cartCount } = useCart();
 
-   // Replace the useEffect with this:
+  // Load products from Neon database API
   useEffect(() => {
-    loadProducts();
-  }, []);
-  
-  const loadProducts = async () => {
-    try {
-      const customProducts = await getProducts();
-      if (customProducts && customProducts.length > 0) {
-        setAllProducts(customProducts);
-      } else {
+    const loadProductsFromAPI = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'https://luxvira-api.onrender.com';
+        const response = await fetch(`${API_URL}/api/products`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Map database fields to frontend fields
+          const dbProducts = data.map(p => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: parseFloat(p.price),
+            image: p.image_url,
+            description: p.description,
+            isPublished: p.is_published
+          }));
+          
+          if (dbProducts.length > 0) {
+            setAllProducts(dbProducts);
+            return;
+          }
+        }
+        
+        // Fallback to defaults if API fails
+        setAllProducts(DEFAULT_PRODUCTS);
+      } catch (err) {
+        console.error('Failed to load from API:', err);
         setAllProducts(DEFAULT_PRODUCTS);
       }
-    } catch (err) {
-      console.error('Failed to load products:', err);
-      setAllProducts(DEFAULT_PRODUCTS);
-    }
-  };
+    };
+    
+    loadProductsFromAPI();
+  }, []);
 
   const categories = ['all', 'diffusers', 'candles', 'gypsum', 'decor'];
   
