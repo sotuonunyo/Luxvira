@@ -55,11 +55,11 @@ export default function Home() {
     
     Object.keys(productsByCategory).forEach(category => {
       const products = productsByCategory[category];
-      if (products.length > 1) {
+      if (products.length > 3) {
         intervals[category] = setInterval(() => {
           setCurrentSlides(prev => ({
             ...prev,
-            [category]: (prev[category] + 1) % products.length
+            [category]: (prev[category] + 1) % Math.max(1, products.length - 3)
           }));
         }, 3000);
       }
@@ -72,7 +72,7 @@ export default function Home() {
     const products = productsByCategory[category];
     setCurrentSlides(prev => ({
       ...prev,
-      [category]: (prev[category] + 1) % products.length
+      [category]: (prev[category] + 1) % Math.max(1, products.length - 3)
     }));
   };
 
@@ -80,7 +80,7 @@ export default function Home() {
     const products = productsByCategory[category];
     setCurrentSlides(prev => ({
       ...prev,
-      [category]: (prev[category] - 1 + products.length) % products.length
+      [category]: (prev[category] - 1 + Math.max(1, products.length - 3)) % Math.max(1, products.length - 3)
     }));
   };
 
@@ -113,7 +113,7 @@ export default function Home() {
                         category === 'gypsum' ? '#FFFDF5' : '#FFF9F5',
             borderBottom: '1px solid #eee'
           }}>
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 15px' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 15px' }}>
               
               {/* Category Header */}
               <div style={{
@@ -148,28 +148,28 @@ export default function Home() {
               </div>
 
               {/* Slider Container */}
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', overflow: 'hidden' }}>
                 {/* Slider Track */}
                 <div style={{
                   display: 'flex',
                   transition: 'transform 0.5s ease-in-out',
-                  transform: `translateX(-${slideIndex * 100}%)`,
+                  transform: `translateX(-${slideIndex * (100/3)}%)`,
                   gap: '15px'
                 }}>
                   {products.length > 0 ? products.map(product => (
                     <div key={product.id} style={{
-                      minWidth: '100%',
+                      minWidth: 'calc(33.333% - 10px)',
                       background: 'white',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       overflow: 'hidden',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                      boxShadow: '0 3px 12px rgba(0,0,0,0.1)',
                       display: 'flex',
                       flexDirection: 'column'
                     }}>
-                      {/* Product Image */}
+                      {/* Product Image - Better sizing */}
                       <div style={{
                         position: 'relative',
-                        paddingTop: '100%', // 1:1 aspect ratio
+                        paddingTop: '75%', // 4:3 aspect ratio (better than 1:1)
                         overflow: 'hidden',
                         background: '#f9f9f9'
                       }}>
@@ -182,30 +182,31 @@ export default function Home() {
                             left: 0,
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover'
+                            objectFit: 'contain', // Show full product
+                            padding: '10px'
                           }}
                         />
                       </div>
                       
                       {/* Product Info */}
-                      <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{
-                          margin: '0 0 8px',
+                          margin: '0 0 6px',
                           color: '#333',
-                          fontSize: '1.05rem',
+                          fontSize: '0.95rem',
                           lineHeight: '1.3',
-                          minHeight: '45px',
+                          minHeight: '40px',
                           overflow: 'hidden'
                         }}>
                           {product.name}
                         </h3>
                         <p style={{
-                          margin: '0 0 12px',
+                          margin: '0 0 10px',
                           color: '#666',
-                          fontSize: '0.85rem',
+                          fontSize: '0.8rem',
                           lineHeight: '1.4',
                           flex: 1,
-                          minHeight: '50px',
+                          minHeight: '45px',
                           overflow: 'hidden'
                         }}>
                           {product.description}
@@ -217,7 +218,7 @@ export default function Home() {
                           marginTop: 'auto'
                         }}>
                           <span style={{
-                            fontSize: '1.2rem',
+                            fontSize: '1.1rem',
                             fontWeight: 'bold',
                             color: categoryColor
                           }}>
@@ -226,17 +227,17 @@ export default function Home() {
                           <Link
                             to="/cart"
                             style={{
-                              padding: '8px 16px',
+                              padding: '6px 12px',
                               background: categoryColor,
                               color: 'white',
-                              borderRadius: '6px',
+                              borderRadius: '5px',
                               textDecoration: 'none',
                               fontWeight: '600',
-                              fontSize: '0.85rem',
+                              fontSize: '0.8rem',
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            Add to Cart
+                            Add
                           </Link>
                         </div>
                       </div>
@@ -244,22 +245,22 @@ export default function Home() {
                   )) : (
                     // Empty state
                     <div style={{
-                      minWidth: '100%',
+                      minWidth: 'calc(33.333% - 10px)',
                       background: 'white',
-                      borderRadius: '12px',
-                      padding: '60px 20px',
+                      borderRadius: '10px',
+                      padding: '50px 20px',
                       textAlign: 'center',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                      boxShadow: '0 3px 12px rgba(0,0,0,0.1)'
                     }}>
-                      <p style={{ color: '#999', margin: 0, fontSize: '1rem' }}>
+                      <p style={{ color: '#999', margin: 0, fontSize: '0.95rem' }}>
                         Products coming soon... 🎨
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Navigation Arrows - Only show if more than 1 product */}
-                {products.length > 1 && (
+                {/* Navigation Arrows */}
+                {products.length > 3 && (
                   <>
                     <button
                       onClick={() => prevSlide(category)}
@@ -271,11 +272,11 @@ export default function Home() {
                         background: 'rgba(255,255,255,0.95)',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '35px',
-                        height: '35px',
+                        width: '32px',
+                        height: '32px',
                         fontSize: '1.2rem',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -295,11 +296,11 @@ export default function Home() {
                         background: 'rgba(255,255,255,0.95)',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '35px',
-                        height: '35px',
+                        width: '32px',
+                        height: '32px',
                         fontSize: '1.2rem',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -313,20 +314,20 @@ export default function Home() {
                 )}
 
                 {/* Dots Indicator */}
-                {products.length > 1 && (
+                {products.length > 3 && (
                   <div style={{
                     display: 'flex',
                     justifyContent: 'center',
-                    gap: '8px',
-                    marginTop: '15px'
+                    gap: '6px',
+                    marginTop: '12px'
                   }}>
-                    {products.map((_, index) => (
+                    {Array.from({ length: Math.max(1, products.length - 3) }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentSlides(prev => ({ ...prev, [category]: index }))}
                         style={{
-                          width: '10px',
-                          height: '10px',
+                          width: '8px',
+                          height: '8px',
                           borderRadius: '50%',
                           border: 'none',
                           background: slideIndex === index ? categoryColor : '#ddd',
