@@ -23,10 +23,9 @@ export default function AdminDashboard() {
   });
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState({});
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Debug: Log on mount
   useEffect(() => {
     console.log('🎯 AdminDashboard mounting...');
     console.log('🔐 isAdminLoggedIn:', isAdminLoggedIn());
@@ -41,13 +40,25 @@ export default function AdminDashboard() {
     loadProducts();
   }, [navigate]);
 
-  const loadProducts = async () => {
-    const allProducts = await getProducts();
-    setProducts(allProducts);
+  const loadProducts = () => {
+    console.log('📦 Loading products...');
+    try {
+      const allProducts = getProducts();
+      console.log('✅ Products loaded:', allProducts);
+      console.log('📊 Product count:', allProducts ? allProducts.length : 0);
+      setProducts(allProducts || []);
+      setError(null);
+    } catch (err) {
+      console.error('❌ Error loading products:', err);
+      setError('Failed to load products: ' + err.message);
+      setProducts([]);
+    } finally {
+      console.log('⏹️ Setting loading to false');
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    console.log('🔐 Logging out...');
     logoutAdmin();
     navigate('/');
   };
@@ -59,35 +70,40 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('📝 Form submitted:', formData);
+    
     if (!formData.name || !formData.price || !formData.image) {
       setMessage({ type: 'error', text: 'Please fill all required fields' });
       return;
     }
     
-  const productData = {
-    ...formData,
-    price: parseFloat(formData.price)
-  };
-  
-    let result;
-    if (editingProduct) {
-      result = await updateProduct(editingProduct.id, productData);
-      setMessage({ type: 'success', text: '✅ Product updated!' });
-    } else {
-      result = await addProduct(productData);
-      setMessage({ type: 'success', text: '✅ Product added!' });
-    }
+    const productData = {
+      ...formData,
+      price: parseFloat(formData.price)
+    };
     
-    if (result.success) {
+    try {
+      if (editingProduct) {
+        console.log('✏️ Updating product:', editingProduct.id);
+        updateProduct(editingProduct.id, productData);
+        setMessage({ type: 'success', text: '✅ Product updated!' });
+      } else {
+        console.log('➕ Adding new product');
+        addProduct(productData);
+        setMessage({ type: 'success', text: '✅ Product added!' });
+      }
+      
       setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
       setEditingProduct(null);
       setShowForm(false);
       loadProducts();
+      
       setTimeout(() => setMessage(null), 3000);
-    } else {
-      setMessage({ type: 'error', text: '❌ Failed: ' + result.error });
+    } catch (err) {
+      console.error('❌ Error saving product:', err);
+      setMessage({ type: 'error', text: 'Failed to save product: ' + err.message });
     }
   };
 
@@ -97,27 +113,36 @@ export default function AdminDashboard() {
     setFormData({
       name: product.name,
       category: product.category,
-      price: product.price.toString(),
+      price: product.price?.toString() || '',
       image: product.image,
-      description: product.description
+      description: product.description || ''
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      const result = await deleteProduct(id);
-      if (result.success) {
+      try {
+        console.log('🗑️ Deleting product:', id);
+        deleteProduct(id);
         setMessage({ type: 'success', text: '🗑️ Product deleted' });
         loadProducts();
         setTimeout(() => setMessage(null), 3000);
+      } catch (err) {
+        console.error('❌ Error deleting product:', err);
+        setMessage({ type: 'error', text: 'Failed to delete product' });
       }
     }
   };
 
-  const handleTogglePublish = async (id) => {
-    await togglePublish(id);
-    loadProducts();
+  const handleTogglePublish = (id) => {
+    try {
+      console.log('🔄 Toggling publish:', id);
+      togglePublish(id);
+      loadProducts();
+    } catch (err) {
+      console.error('❌ Error toggling publish:', err);
+    }
   };
 
   const categories = ['diffusers', 'candles', 'gypsum', 'decor'];
@@ -125,19 +150,85 @@ export default function AdminDashboard() {
   // Loading state
   if (loading) {
     return (
+      <div style={{ 
+        padding: '60px 20px', 
+        textAlign: 'center', 
+        fontFamily: 'Arial',
+        minHeight: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column'
+      }}>
+        <div style={{ 
+          width: '50px', 
+          height: '50px', 
+          border: '5px solid #8B7355', 
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '20px'
+        }}></div>
+        <p style={{ color: '#666', fontSize: '1.1rem' }}>Loading dashboard...</p>
+        <p style={{ color: '#999', fontSize: '0.9rem', marginTop: '10px' }}>
+          If this takes too long, check browser console (F12)
+        </p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
       <div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'Arial' }}>
-        <p>Loading dashboard...</p>
+        <div style={{ 
+          background: '#ffebee', 
+          color: '#c62828', 
+          padding: '20px', 
+          borderRadius: '10px',
+          marginBottom: '20px'
+        }}>
+          <h2>❌ Error Loading Dashboard</h2>
+          <p>{error}</p>
+        </div>
+        <button 
+          onClick={loadProducts}
+          style={{
+            padding: '12px 30px',
+            background: '#8B7355',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          🔄 Retry
+        </button>
       </div>
     );
   }
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
-      {/* Debug Info (remove after fixing) */}
-      <div style={{ background: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.85rem' }}>
+      {/* Debug Info */}
+      <div style={{ 
+        background: '#e3f2fd', 
+        padding: '15px', 
+        borderRadius: '8px', 
+        marginBottom: '20px', 
+        fontSize: '0.85rem' 
+      }}>
         <strong>🔍 Debug Info:</strong>
-        <pre style={{ margin: '10px 0 0', overflow: 'auto' }}>{JSON.stringify(debugInfo, null, 2)}</pre>
-        <p style={{ margin: '10px 0 0', color: '#666' }}>Check browser console (F12) for more details</p>
+        <div style={{ marginTop: '10px' }}>
+          <div>✅ Logged in: {isAdminLoggedIn() ? 'Yes' : 'No'}</div>
+          <div>📦 Products loaded: {products ? products.length : 0}</div>
+          <div>💾 LocalStorage: {localStorage.getItem('luxvira_products') ? 'Has data' : 'Empty'}</div>
+        </div>
+        <p style={{ margin: '10px 0 0', color: '#666' }}>
+          Check browser console (F12) for detailed logs
+        </p>
       </div>
 
       {/* Header */}
@@ -360,12 +451,14 @@ export default function AdminDashboard() {
       {/* Products Table */}
       <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid #eee' }}>
-          <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({products.length})</h2>
+          <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({products ? products.length : 0})</h2>
         </div>
-        {products.length === 0 ? (
+        {!products || products.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
             <p>No products yet. Click "Add New Product" to get started!</p>
-            <p style={{ fontSize: '0.85rem', marginTop: '10px' }}>Products are stored in localStorage</p>
+            <p style={{ fontSize: '0.85rem', marginTop: '10px', color: '#999' }}>
+              Products are stored in localStorage
+            </p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
