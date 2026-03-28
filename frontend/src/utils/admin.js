@@ -1,29 +1,3 @@
-// Admin utilities - Database API integration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-const ADMIN_PASSWORD = 'luxvira2026';
-const ADMIN_TOKEN_KEY = 'luxvira_admin_token';
-
-// ===== AUTH FUNCTIONS =====
-
-export const isAdminLoggedIn = () => {
-  return localStorage.getItem(ADMIN_TOKEN_KEY) === 'authenticated';
-};
-
-export const loginAdmin = (password) => {
-  if (password === ADMIN_PASSWORD) {
-    localStorage.setItem(ADMIN_TOKEN_KEY, 'authenticated');
-    return { success: true };
-  }
-  return { success: false, error: 'Invalid password' };
-};
-
-export const logoutAdmin = () => {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
-};
-
-// ===== API FUNCTIONS (Database) =====
-
 // Get products from database API
 export const getProducts = async () => {
   try {
@@ -35,8 +9,8 @@ export const getProducts = async () => {
     });
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to fetch products');
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to fetch products'}`);
     }
     
     const data = await response.json();
@@ -54,8 +28,8 @@ export const getProducts = async () => {
       updatedAt: p.updated_at
     }));
   } catch (err) {
-    console.error('Error fetching products:', err);
-    // Fallback to empty array on error
+    console.error('❌ Error fetching products:', err);
+    // Return empty array on error so UI doesn't crash
     return [];
   }
 };
@@ -63,6 +37,8 @@ export const getProducts = async () => {
 // Add product to database API
 export const addProduct = async (product) => {
   try {
+    console.log('📤 Sending product to API:', product);
+    
     const response = await fetch(`${API_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,12 +52,17 @@ export const addProduct = async (product) => {
       })
     });
     
+    console.log('📥 API response status:', response.status);
+    
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to add product');
+      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text().catch(() => '');
+      console.error('❌ API error response:', errorData || errorText);
+      throw new Error(errorData.error || errorText || `HTTP ${response.status}`);
     }
     
     const data = await response.json();
+    console.log('✅ Product added successfully:', data);
     
     return {
       success: true,
@@ -96,85 +77,7 @@ export const addProduct = async (product) => {
       }
     };
   } catch (err) {
-    console.error('Error adding product:', err);
-    return { success: false, error: err.message };
-  }
-};
-
-// Update product in database API
-export const updateProduct = async (id, updates) => {
-  try {
-    const response = await fetch(`${API_URL}/api/products/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: updates.name,
-        category: updates.category,
-        price: updates.price,
-        image_url: updates.image,
-        description: updates.description || '',
-        is_published: updates.isPublished !== false
-      })
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to update product');
-    }
-    
-    const data = await response.json();
-    
-    return {
-      success: true,
-      product: {
-        id: data.id,
-        name: data.name,
-        category: data.category,
-        price: parseFloat(data.price),
-        image: data.image_url,
-        description: data.description,
-        isPublished: data.is_published
-      }
-    };
-  } catch (err) {
-    console.error('Error updating product:', err);
-    return { success: false, error: err.message };
-  }
-};
-
-// Delete product from database API
-export const deleteProduct = async (id) => {
-  try {
-    const response = await fetch(`${API_URL}/api/products/${id}`, {
-      method: 'DELETE'
-    });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to delete product');
-    }
-    
-    return { success: true };
-  } catch (err) {
-    console.error('Error deleting product:', err);
-    return { success: false, error: err.message };
-  }
-};
-
-// Toggle publish status via API
-export const togglePublish = async (id) => {
-  try {
-    // First get current product state
-    const products = await getProducts();
-    const product = products.find(p => p.id === id);
-    if (!product) {
-      return { success: false, error: 'Product not found' };
-    }
-    
-    // Toggle and update
-    return await updateProduct(id, { isPublished: !product.isPublished });
-  } catch (err) {
-    console.error('Error toggling publish:', err);
+    console.error('❌ Error adding product:', err);
     return { success: false, error: err.message };
   }
 };
