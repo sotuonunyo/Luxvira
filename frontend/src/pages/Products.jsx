@@ -40,7 +40,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const { addToCart, cartCount } = useCart();
 
-  // Replace the useEffect with this:
+   // Replace the useEffect with this:
   useEffect(() => {
     loadProducts();
   }, []);
