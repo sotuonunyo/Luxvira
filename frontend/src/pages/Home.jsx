@@ -97,7 +97,7 @@ export default function Home() {
     
     const interval = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % featuredProducts.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 2500); // Change slide every 2.5 seconds
     
     return () => clearInterval(interval);
   }, [isAutoPlaying, featuredProducts]);
