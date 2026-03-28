@@ -40,13 +40,19 @@ export default function AdminDashboard() {
     loadProducts();
   }, [navigate]);
 
-    const loadProducts = async () => {
+    const loadProducts = () => {
       console.log('📦 Loading products...');
       try {
-        const allProducts = await getProducts(); // ← Added await
+        // ✅ NO await - getProducts() is synchronous (localStorage)
+        const allProducts = getProducts();
+        
         console.log('✅ Products loaded:', allProducts);
         console.log('📊 Product count:', Array.isArray(allProducts) ? allProducts.length : 0);
-        setProducts(Array.isArray(allProducts) ? allProducts : []);
+        
+        // ✅ Ensure we always set an array
+        const productsArray = Array.isArray(allProducts) ? allProducts : [];
+        setProducts(productsArray);
+        
         setError(null);
       } catch (err) {
         console.error('❌ Error loading products:', err);
