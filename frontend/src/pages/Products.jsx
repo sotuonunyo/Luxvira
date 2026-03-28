@@ -40,26 +40,16 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const { addToCart, cartCount } = useCart();
 
-  // Load products from database API
+  // Replace the useEffect with this:
   useEffect(() => {
     loadProducts();
   }, []);
-
+  
   const loadProducts = async () => {
-    setLoading(true);
     try {
-      const products = await getProducts();
-      if (products && products.length > 0) {
-        // Map database fields to frontend fields
-        setAllProducts(products.map(p => ({
-          id: p.id,
-          name: p.name,
-          category: p.category,
-          price: parseFloat(p.price),
-          image: p.image_url,
-          description: p.description,
-          isPublished: p.is_published
-        })));
+      const customProducts = await getProducts();
+      if (customProducts && customProducts.length > 0) {
+        setAllProducts(customProducts);
       } else {
         setAllProducts(DEFAULT_PRODUCTS);
       }
@@ -67,7 +57,6 @@ export default function Products() {
       console.error('Failed to load products:', err);
       setAllProducts(DEFAULT_PRODUCTS);
     }
-    setLoading(false);
   };
 
   const categories = ['all', 'diffusers', 'candles', 'gypsum', 'decor'];
