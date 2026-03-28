@@ -32,10 +32,14 @@ export default function AdminDashboard() {
     loadProducts();
   }, []);
 
-  // ✅ SYNC function - NO await, NO fetch
-  const loadProducts = () => {
-    const allProducts = getProducts(); // ← Returns array directly
-    setProducts(Array.isArray(allProducts) ? allProducts : []);
+  const loadProducts = async () => {
+    try {
+      const allProducts = await getProducts();
+      setProducts(Array.isArray(allProducts) ? allProducts : []);
+    } catch (err) {
+      console.error('Error loading products:', err);
+      setProducts([]);
+    }
   };
 
   const handleLogout = () => {
@@ -50,35 +54,35 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price || !formData.image) {
       setMessage({ type: 'error', text: 'Please fill all required fields' });
       return;
     }
-    
     const productData = {
       ...formData,
       price: parseFloat(formData.price)
     };
     
+    let result;
     if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
+      result = await updateProduct(editingProduct.id, productData);
       setMessage({ type: 'success', text: '✅ Product updated!' });
     } else {
-      addProduct(productData);
+      result = await addProduct(productData);
       setMessage({ type: 'success', text: '✅ Product added!' });
     }
     
-    // Reset form
-    setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
-    setEditingProduct(null);
-    setShowForm(false);
-    
-    // ✅ Reload products (sync)
-    loadProducts();
-    
-    setTimeout(() => setMessage(null), 3000);
+    if (result.success) {
+      setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
+      setEditingProduct(null);
+      setShowForm(false);
+      await loadProducts();
+      setTimeout(() => setMessage(null), 3000);
+    } else {
+      setMessage({ type: 'error', text: '❌ Failed: ' + result.error });
+    }
   };
 
   const handleEdit = (product) => {
@@ -93,18 +97,20 @@ export default function AdminDashboard() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(id);
-      setMessage({ type: 'success', text: '🗑️ Product deleted' });
-      loadProducts();
-      setTimeout(() => setMessage(null), 3000);
+      const result = await deleteProduct(id);
+      if (result.success) {
+        setMessage({ type: 'success', text: '🗑️ Product deleted' });
+        await loadProducts();
+        setTimeout(() => setMessage(null), 3000);
+      }
     }
   };
-
-  const handleTogglePublish = (id) => {
-    togglePublish(id);
-    loadProducts();
+  
+  const handleTogglePublish = async (id) => {
+    await togglePublish(id);
+    await loadProducts();
   };
 
   const categories = ['diffusers', 'candles', 'gypsum', 'decor'];
