@@ -40,23 +40,23 @@ export default function AdminDashboard() {
     loadProducts();
   }, [navigate]);
 
-  const loadProducts = () => {
-    console.log('📦 Loading products...');
-    try {
-      const allProducts = getProducts();
-      console.log('✅ Products loaded:', allProducts);
-      console.log('📊 Product count:', allProducts ? allProducts.length : 0);
-      setProducts(allProducts || []);
-      setError(null);
-    } catch (err) {
-      console.error('❌ Error loading products:', err);
-      setError('Failed to load products: ' + err.message);
-      setProducts([]);
-    } finally {
-      console.log('⏹️ Setting loading to false');
-      setLoading(false);
-    }
-  };
+    const loadProducts = async () => {
+      console.log('📦 Loading products...');
+      try {
+        const allProducts = await getProducts(); // ← Added await
+        console.log('✅ Products loaded:', allProducts);
+        console.log('📊 Product count:', Array.isArray(allProducts) ? allProducts.length : 0);
+        setProducts(Array.isArray(allProducts) ? allProducts : []);
+        setError(null);
+      } catch (err) {
+        console.error('❌ Error loading products:', err);
+        setError('Failed to load products: ' + err.message);
+        setProducts([]);
+      } finally {
+        console.log('⏹️ Setting loading to false');
+        setLoading(false);
+      }
+    };
 
   const handleLogout = () => {
     logoutAdmin();
