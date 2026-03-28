@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [productsByCategory, setProductsByCategory] = useState({});
+  const [currentSlides, setCurrentSlides] = useState({});
 
-  // Fetch featured products from Neon database
+  // Fetch products from Neon database and group by category
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
+    const fetchProducts = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'https://luxvira-api.onrender.com';
         const response = await fetch(`${API_URL}/api/products?showUnpublished=false`);
@@ -16,356 +15,123 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           
-          // Map database fields and take first 5 for slideshow
-          const products = data.slice(0, 5).map(p => ({
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            price: parseFloat(p.price),
-            image: p.image_url,
-            description: p.description
-          }));
-          
-          setFeaturedProducts(products);
-        } else {
-          // Fallback to sample products if API fails
-          setFeaturedProducts([
-            {
-              id: 1,
-              name: 'Lavender Dream Diffuser',
-              category: 'diffusers',
-              price: 4500,
-              image: 'https://placehold.co/800x600/8B7355/FFFFFF?text=Lavender+Diffuser',
-              description: 'Handcrafted reed diffuser with calming lavender scent. Lasts 60+ days.'
-            },
-            {
-              id: 2,
-              name: 'Vanilla Bean Candle',
-              category: 'candles',
-              price: 3200,
-              image: 'https://placehold.co/800x600/F5E6D3/333333?text=Vanilla+Candle',
-              description: 'Soy wax candle with pure vanilla essence. 40-hour burn time.'
-            },
-            {
-              id: 3,
-              name: 'Rose Gold Gypsum Tray',
-              category: 'gypsum',
-              price: 5800,
-              image: 'https://placehold.co/800x600/D4AF37/FFFFFF?text=Gypsum+Tray',
-              description: 'Elegant hand-poured gypsum tray with rose gold accents.'
+          // Group products by category
+          const grouped = data.reduce((acc, product) => {
+            const category = product.category.toLowerCase();
+            if (!acc[category]) {
+              acc[category] = [];
             }
-          ]);
+            acc[category].push({
+              id: product.id,
+              name: product.name,
+              category: product.category,
+              price: parseFloat(product.price),
+              image: product.image_url,
+              description: product.description
+            });
+            return acc;
+          }, {});
+          
+          setProductsByCategory(grouped);
+          
+          // Initialize slide positions for each category
+          const initialSlides = {};
+          Object.keys(grouped).forEach(cat => {
+            initialSlides[cat] = 0;
+          });
+          setCurrentSlides(initialSlides);
         }
       } catch (err) {
-        console.error('Failed to fetch featured products:', err);
-        // Fallback to sample products
-        setFeaturedProducts([
-          {
-            id: 1,
-            name: 'Lavender Dream Diffuser',
-            category: 'diffusers',
-            price: 4500,
-            image: 'https://placehold.co/800x600/8B7355/FFFFFF?text=Lavender+Diffuser',
-            description: 'Handcrafted reed diffuser with calming lavender scent. Lasts 60+ days.'
-          },
-          {
-            id: 2,
-            name: 'Vanilla Bean Candle',
-            category: 'candles',
-            price: 3200,
-            image: 'https://placehold.co/800x600/F5E6D3/333333?text=Vanilla+Candle',
-            description: 'Soy wax candle with pure vanilla essence. 40-hour burn time.'
-          },
-          {
-            id: 3,
-            name: 'Rose Gold Gypsum Tray',
-            category: 'gypsum',
-            price: 5800,
-            image: 'https://placehold.co/800x600/D4AF37/FFFFFF?text=Gypsum+Tray',
-            description: 'Elegant hand-poured gypsum tray with rose gold accents.'
-          }
-        ]);
+        console.error('Failed to fetch products:', err);
       }
     };
     
-    fetchFeaturedProducts();
+    fetchProducts();
   }, []);
 
-  // Auto-rotate slideshow
+  // Auto-rotate each category slider
   useEffect(() => {
-    if (!isAutoPlaying || featuredProducts.length === 0) return;
+    if (Object.keys(productsByCategory).length === 0) return;
     
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % featuredProducts.length);
-    }, 2500); // Change slide every 2.5 seconds
+    const intervals = {};
     
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, featuredProducts]);
+    Object.keys(productsByCategory).forEach(category => {
+      const products = productsByCategory[category];
+      if (products.length > 3) { // Only auto-rotate if more than 3 products
+        intervals[category] = setInterval(() => {
+          setCurrentSlides(prev => ({
+            ...prev,
+            [category]: (prev[category] + 1) % (products.length - 2)
+          }));
+        }, 2500); // 2.5 seconds
+      }
+    });
+    
+    return () => {
+      Object.values(intervals).forEach(clearInterval);
+    };
+  }, [productsByCategory]);
 
-  // Navigation functions
-  const nextSlide = () => {
-    setCurrentSlide(prev => (prev + 1) % featuredProducts.length);
-    setIsAutoPlaying(false); // Pause auto-play on manual nav
+  const nextSlide = (category) => {
+    const products = productsByCategory[category];
+    setCurrentSlides(prev => ({
+      ...prev,
+      [category]: (prev[category] + 1) % (products.length - 2)
+    }));
   };
 
-  const prevSlide = () => {
-    setCurrentSlide(prev => (prev - 1 + featuredProducts.length) % featuredProducts.length);
-    setIsAutoPlaying(false);
+  const prevSlide = (category) => {
+    const products = productsByCategory[category];
+    setCurrentSlides(prev => ({
+      ...prev,
+      [category]: (prev[category] - 1 + products.length - 2) % (products.length - 2)
+    }));
   };
 
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-    setIsAutoPlaying(false);
+  const getCategoryEmoji = (category) => {
+    const emojis = {
+      diffusers: '🌸',
+      candles: '🕯️',
+      gypsum: '✨',
+      decor: '🏺'
+    };
+    return emojis[category.toLowerCase()] || '🛍️';
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      diffusers: '#8B7355',
+      candles: '#D4AF37',
+      gypsum: '#B8860B',
+      decor: '#A0522D'
+    };
+    return colors[category.toLowerCase()] || '#8B7355';
   };
 
   return (
     <div style={{ fontFamily: 'Arial' }}>
-      {/* ===== HERO SLIDESHOW SECTION ===== */}
-      {featuredProducts.length > 0 && (
-        <section style={{
-          position: 'relative',
-          width: '100%',
-          height: '500px',
-          overflow: 'hidden',
-          background: '#f9f9f9'
+      {/* ===== WELCOME SECTION (No Logo) ===== */}
+      <section style={{ 
+        padding: '80px 20px', 
+        textAlign: 'center', 
+        maxWidth: '900px', 
+        margin: '0 auto',
+        background: 'linear-gradient(135deg, #FFF9F5 0%, #FFFFFF 100%)'
+      }}>
+        <h1 style={{ 
+          color: '#8B7355', 
+          fontSize: '3rem', 
+          marginBottom: '20px',
+          fontWeight: '700'
         }}>
-          {/* Slides */}
-          <div style={{
-            display: 'flex',
-            transition: 'transform 0.5s ease-in-out',
-            transform: `translateX(-${currentSlide * 100}%)`,
-            height: '100%'
-          }}>
-            {featuredProducts.map((product, index) => (
-              <div key={product.id} style={{
-                minWidth: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px',
-                boxSizing: 'border-box'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '40px',
-                  maxWidth: '1200px',
-                  width: '100%',
-                  flexWrap: 'wrap'
-                }}>
-                  {/* Product Image */}
-                  <div style={{
-                    flex: '1 1 400px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      style={{
-                        maxWidth: '400px',
-                        width: '100%',
-                        height: 'auto',
-                        borderRadius: '12px',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Product Info */}
-                  <div style={{
-                    flex: '1 1 300px',
-                    textAlign: 'left',
-                    padding: '20px'
-                  }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '5px 15px',
-                      background: '#F5E6D3',
-                      color: '#8B7355',
-                      borderRadius: '20px',
-                      fontSize: '0.85rem',
-                      fontWeight: '500',
-                      marginBottom: '15px',
-                      textTransform: 'capitalize'
-                    }}>
-                      {product.category}
-                    </span>
-                    <h2 style={{
-                      fontSize: '2rem',
-                      color: '#333',
-                      margin: '0 0 15px',
-                      lineHeight: '1.3'
-                    }}>
-                      {product.name}
-                    </h2>
-                    <p style={{
-                      fontSize: '1.1rem',
-                      color: '#666',
-                      margin: '0 0 20px',
-                      lineHeight: '1.6'
-                    }}>
-                      {product.description}
-                    </p>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '20px',
-                      flexWrap: 'wrap'
-                    }}>
-                      <span style={{
-                        fontSize: '1.8rem',
-                        fontWeight: 'bold',
-                        color: '#8B7355'
-                      }}>
-                        ₦{product.price.toLocaleString()}
-                      </span>
-                      <Link
-                        to="/products"
-                        style={{
-                          padding: '12px 30px',
-                          background: '#8B7355',
-                          color: 'white',
-                          textDecoration: 'none',
-                          borderRadius: '8px',
-                          fontWeight: '500',
-                          transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = '#6d5a43'}
-                        onMouseLeave={(e) => e.target.style.background = '#8B7355'}
-                      >
-                        Shop Now →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            style={{
-              position: 'absolute',
-              left: '20px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,0.9)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '50px',
-              height: '50px',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#fff'}
-            onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.9)'}
-          >
-            ←
-          </button>
-          <button
-            onClick={nextSlide}
-            style={{
-              position: 'absolute',
-              right: '20px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,0.9)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '50px',
-              height: '50px',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#fff'}
-            onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.9)'}
-          >
-            →
-          </button>
-
-          {/* Slide Indicators */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '10px',
-            zIndex: 10
-          }}>
-            {featuredProducts.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: currentSlide === index ? '#8B7355' : 'rgba(139,115,85,0.3)',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Auto-play Toggle */}
-          <button
-            onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            style={{
-              position: 'absolute',
-              bottom: '20px',
-              right: '20px',
-              padding: '8px 16px',
-              background: 'rgba(255,255,255,0.9)',
-              border: 'none',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              zIndex: 10
-            }}
-          >
-            {isAutoPlaying ? '⏸ Pause' : '▶ Play'}
-          </button>
-        </section>
-      )}
-
-      {/* ===== WELCOME SECTION ===== */}
-      <section style={{ padding: '60px 20px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-        <img
-          src="/logo.png"
-          alt="Luxvira Scents Logo"
-          style={{
-            width: '200px',
-            height: '200px',
-            objectFit: 'contain',
-            marginBottom: '30px'
-          }}
-        />
-        <h1 style={{ color: '#8B7355', fontSize: '2.5rem', marginBottom: '20px' }}>
           Welcome to Luxvira Scents
         </h1>
-        <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '40px' }}>
+        <p style={{ 
+          fontSize: '1.3rem', 
+          color: '#666', 
+          marginBottom: '40px',
+          lineHeight: '1.6'
+        }}>
           Handcrafted diffusers, scented candles, gypsum crafts & interior decor.<br/>
           Made with love in Nigeria ✨
         </p>
@@ -386,7 +152,7 @@ export default function Home() {
             onMouseEnter={(e) => e.target.style.background = '#6d5a43'}
             onMouseLeave={(e) => e.target.style.background = '#8B7355'}
           >
-            🛍️ Shop Now
+            🛍️ Shop All Products
           </Link>
           <Link
             to="/contact"
@@ -403,27 +169,309 @@ export default function Home() {
             📬 Contact Us
           </Link>
         </div>
-        
-        <div style={{ marginTop: '60px', padding: '30px', background: '#FFF9F5', borderRadius: '12px' }}>
-          <h2 style={{ color: '#8B7355', marginBottom: '15px' }}>✨ Why Choose Us?</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
+      </section>
+
+      {/* ===== CATEGORY SLIDERS ===== */}
+      {Object.keys(productsByCategory).length > 0 ? (
+        Object.entries(productsByCategory).map(([category, products]) => (
+          products.length > 0 && (
+            <section key={category} style={{
+              padding: '60px 20px',
+              background: category === 'diffusers' ? '#FFF9F5' : 
+                          category === 'candles' ? '#FFFBF0' : 
+                          category === 'gypsum' ? '#FFFDF5' : '#FFF9F5'
+            }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                {/* Category Header */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '30px'
+                }}>
+                  <h2 style={{
+                    fontSize: '2rem',
+                    color: getCategoryColor(category),
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textTransform: 'capitalize'
+                  }}>
+                    {getCategoryEmoji(category)} {category}
+                  </h2>
+                  <Link
+                    to={`/products?category=${category}`}
+                    style={{
+                      color: getCategoryColor(category),
+                      textDecoration: 'none',
+                      fontWeight: '600',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    View All →
+                  </Link>
+                </div>
+
+                {/* Slider Container */}
+                <div style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  padding: '0 50px'
+                }}>
+                  {/* Slider Track */}
+                  <div style={{
+                    display: 'flex',
+                    transition: 'transform 0.5s ease-in-out',
+                    transform: `translateX(-${(currentSlides[category] || 0) * (100/3)}%)`,
+                    gap: '20px'
+                  }}>
+                    {products.map(product => (
+                      <div key={product.id} style={{
+                        minWidth: 'calc(33.333% - 14px)',
+                        background: 'white',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+                        transition: 'transform 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          style={{
+                            width: '100%',
+                            height: '250px',
+                            objectFit: 'cover',
+                            background: '#f9f9f9'
+                          }}
+                        />
+                        <div style={{ padding: '20px' }}>
+                          <h3 style={{
+                            margin: '0 0 8px',
+                            color: '#333',
+                            fontSize: '1.1rem',
+                            minHeight: '50px'
+                          }}>
+                            {product.name}
+                          </h3>
+                          <p style={{
+                            margin: '0 0 12px',
+                            color: '#666',
+                            fontSize: '0.9rem',
+                            minHeight: '40px'
+                          }}>
+                            {product.description}
+                          </p>
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <span style={{
+                              fontSize: '1.3rem',
+                              fontWeight: 'bold',
+                              color: getCategoryColor(category)
+                            }}>
+                              ₦{product.price.toLocaleString()}
+                            </span>
+                            <Link
+                              to="/cart"
+                              style={{
+                                padding: '8px 16px',
+                                background: getCategoryColor(category),
+                                color: 'white',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                fontWeight: '500',
+                                fontSize: '0.9rem'
+                              }}
+                            >
+                              Add to Cart
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {products.length > 3 && (
+                    <>
+                      <button
+                        onClick={() => prevSlide(category)}
+                        style={{
+                          position: 'absolute',
+                          left: '0',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'white',
+                          border: '2px solid #ddd',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '1.2rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                      >
+                        ←
+                      </button>
+                      <button
+                        onClick={() => nextSlide(category)}
+                        style={{
+                          position: 'absolute',
+                          right: '0',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'white',
+                          border: '2px solid #ddd',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '1.2rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                      >
+                        →
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Dots Indicator */}
+                {products.length > 3 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    marginTop: '20px'
+                  }}>
+                    {Array.from({ length: products.length - 2 }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlides(prev => ({ ...prev, [category]: index }))}
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          border: 'none',
+                          background: (currentSlides[category] || 0) === index 
+                            ? getCategoryColor(category) 
+                            : '#ddd',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s'
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )
+        ))
+      ) : (
+        // Fallback: Show category sections with sample products
+        <>
+          {['diffusers', 'candles', 'gypsum', 'decor'].map(category => (
+            <section key={category} style={{
+              padding: '60px 20px',
+              background: category === 'diffusers' ? '#FFF9F5' : 
+                          category === 'candles' ? '#FFFBF0' : 
+                          category === 'gypsum' ? '#FFFDF5' : '#FFF9F5'
+            }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                <h2 style={{
+                  fontSize: '2rem',
+                  color: getCategoryColor(category),
+                  marginBottom: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textTransform: 'capitalize'
+                }}>
+                  {getCategoryEmoji(category)} {category}
+                </h2>
+                <p style={{ textAlign: 'center', color: '#666', padding: '40px' }}>
+                  Products coming soon... Check back later! 🎨
+                </p>
+              </div>
+            </section>
+          ))}
+        </>
+      )}
+
+      {/* ===== WHY CHOOSE US SECTION ===== */}
+      <section style={{ padding: '60px 20px', textAlign: 'center', background: 'white' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <h2 style={{ color: '#8B7355', marginBottom: '40px', fontSize: '2rem' }}>
+            ✨ Why Choose Us?
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '30px' }}>
             <div>
-              <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🌿</div>
-              <h3>Handcrafted</h3>
-              <p>Made with care & premium ingredients</p>
+              <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🌿</div>
+              <h3 style={{ color: '#333', marginBottom: '10px' }}>Handcrafted</h3>
+              <p style={{ color: '#666' }}>Made with care & premium ingredients</p>
             </div>
             <div>
-              <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🚚</div>
-              <h3>Fast Delivery</h3>
-              <p>Quick shipping across Nigeria</p>
+              <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
+              <h3 style={{ color: '#333', marginBottom: '10px' }}>Fast Delivery</h3>
+              <p style={{ color: '#666' }}>Quick shipping across Nigeria</p>
             </div>
             <div>
-              <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>💯</div>
-              <h3>Quality Guaranteed</h3>
-              <p>100% satisfaction guaranteed</p>
+              <div style={{ fontSize: '3rem', marginBottom: '15px' }}>💯</div>
+              <h3 style={{ color: '#333', marginBottom: '10px' }}>Quality Guaranteed</h3>
+              <p style={{ color: '#666' }}>100% satisfaction guaranteed</p>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ===== FOOTER CTA ===== */}
+      <section style={{
+        padding: '60px 20px',
+        textAlign: 'center',
+        background: 'linear-gradient(135deg, #8B7355 0%, #6d5a43 100%)',
+        color: 'white'
+      }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '20px' }}>
+          Ready to Transform Your Space?
+        </h2>
+        <p style={{ fontSize: '1.1rem', marginBottom: '30px', opacity: 0.9 }}>
+          Browse our complete collection of handcrafted home fragrances and decor
+        </p>
+        <Link
+          to="/products"
+          style={{
+            display: 'inline-block',
+            padding: '15px 40px',
+            background: 'white',
+            color: '#8B7355',
+            borderRadius: '10px',
+            fontWeight: 'bold',
+            fontSize: '1.1rem',
+            textDecoration: 'none'
+          }}
+        >
+          Shop Now →
+        </Link>
       </section>
     </div>
   );
