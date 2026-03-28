@@ -7,7 +7,8 @@ import {
   addProduct,
   updateProduct,
   deleteProduct,
-  togglePublish
+  togglePublish,
+  saveProducts
 } from '../utils/admin';
 
 export default function AdminDashboard() {
@@ -22,10 +23,10 @@ export default function AdminDashboard() {
     description: ''
   });
   const [message, setMessage] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState({});
   const navigate = useNavigate();
 
+  // Debug: Log on mount
   useEffect(() => {
     console.log('🎯 AdminDashboard mounting...');
     console.log('🔐 isAdminLoggedIn:', isAdminLoggedIn());
@@ -40,29 +41,34 @@ export default function AdminDashboard() {
     loadProducts();
   }, [navigate]);
 
-    const loadProducts = () => {
-      console.log('📦 Loading products...');
-      try {
-        // ✅ NO await - getProducts() is synchronous (localStorage)
-        const allProducts = getProducts();
-        
-        console.log('✅ Products loaded:', allProducts);
-        console.log('📊 Product count:', Array.isArray(allProducts) ? allProducts.length : 0);
-        
-        // ✅ Ensure we always set an array
-        const productsArray = Array.isArray(allProducts) ? allProducts : [];
-        setProducts(productsArray);
-        
-        setError(null);
-      } catch (err) {
-        console.error('❌ Error loading products:', err);
-        setError('Failed to load products: ' + err.message);
-        setProducts([]);
-      } finally {
-        console.log('⏹️ Setting loading to false');
-        setLoading(false);
+  const loadProducts = () => {
+    console.log('📦 Loading products from localStorage...');
+    try {
+      // Direct localStorage check for debugging
+      const raw = localStorage.getItem('luxvira_products');
+      console.log('🗄️ localStorage raw:', raw ? 'Has data' : 'Empty');
+      if (raw) {
+        console.log('🗄️ localStorage parsed:', JSON.parse(raw));
       }
-    };
+      
+      const allProducts = getProducts();
+      console.log('✅ getProducts() returned:', allProducts);
+      console.log('📊 Product count:', Array.isArray(allProducts) ? allProducts.length : 'NOT AN ARRAY');
+      
+      // Ensure we always set an array
+      const productsArray = Array.isArray(allProducts) ? allProducts : [];
+      setProducts(productsArray);
+      
+      setDebugInfo({
+        rawStorage: raw ? 'Has data' : 'Empty',
+        productCount: productsArray.length,
+        firstProduct: productsArray[0]?.name || 'N/A'
+      });
+    } catch (err) {
+      console.error('❌ Error loading products:', err);
+      setProducts([]);
+    }
+  };
 
   const handleLogout = () => {
     logoutAdmin();
@@ -91,25 +97,33 @@ export default function AdminDashboard() {
     };
     
     try {
+      let result;
       if (editingProduct) {
         console.log('✏️ Updating product:', editingProduct.id);
-        updateProduct(editingProduct.id, productData);
+        result = updateProduct(editingProduct.id, productData);
         setMessage({ type: 'success', text: '✅ Product updated!' });
       } else {
-        console.log('➕ Adding new product');
-        addProduct(productData);
+        console.log('➕ Adding new product:', productData);
+        result = addProduct(productData);
         setMessage({ type: 'success', text: '✅ Product added!' });
       }
       
+      console.log('✅ addProduct result:', result);
+      
+      // CRITICAL: Force reload products AFTER saving
+      console.log('🔄 Reloading products list...');
+      loadProducts();
+      
+      // Reset form
       setFormData({ name: '', category: 'diffusers', price: '', image: '', description: '' });
       setEditingProduct(null);
       setShowForm(false);
-      loadProducts();
       
+      // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       console.error('❌ Error saving product:', err);
-      setMessage({ type: 'error', text: 'Failed to save product: ' + err.message });
+      setMessage({ type: 'error', text: 'Failed to save: ' + err.message });
     }
   };
 
@@ -135,8 +149,8 @@ export default function AdminDashboard() {
         loadProducts();
         setTimeout(() => setMessage(null), 3000);
       } catch (err) {
-        console.error('❌ Error deleting product:', err);
-        setMessage({ type: 'error', text: 'Failed to delete product' });
+        console.error('❌ Error deleting:', err);
+        setMessage({ type: 'error', text: 'Failed to delete' });
       }
     }
   };
@@ -147,90 +161,29 @@ export default function AdminDashboard() {
       togglePublish(id);
       loadProducts();
     } catch (err) {
-      console.error('❌ Error toggling publish:', err);
+      console.error('❌ Error toggling:', err);
     }
   };
 
   const categories = ['diffusers', 'candles', 'gypsum', 'decor'];
 
-  // Loading state
-  if (loading) {
-    return (
-      <div style={{ 
-        padding: '60px 20px', 
-        textAlign: 'center', 
-        fontFamily: 'Arial',
-        minHeight: '400px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column'
-      }}>
-        <div style={{ 
-          width: '50px', 
-          height: '50px', 
-          border: '5px solid #8B7355', 
-          borderTopColor: 'transparent',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '20px'
-        }}></div>
-        <p style={{ color: '#666', fontSize: '1.1rem' }}>Loading dashboard...</p>
-        <p style={{ color: '#999', fontSize: '0.9rem', marginTop: '10px' }}>
-          If this takes too long, check browser console (F12)
-        </p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'Arial' }}>
-        <div style={{ 
-          background: '#ffebee', 
-          color: '#c62828', 
-          padding: '20px', 
-          borderRadius: '10px',
-          marginBottom: '20px'
-        }}>
-          <h2>❌ Error Loading Dashboard</h2>
-          <p>{error}</p>
-        </div>
-        <button 
-          onClick={loadProducts}
-          style={{
-            padding: '12px 30px',
-            background: '#8B7355',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
-        >
-          🔄 Retry
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial' }}>
-      {/* Debug Info */}
+      {/* Debug Info Box */}
       <div style={{ 
         background: '#e3f2fd', 
         padding: '15px', 
         borderRadius: '8px', 
         marginBottom: '20px', 
-        fontSize: '0.85rem' 
+        fontSize: '0.85rem',
+        border: '1px solid #90caf9'
       }}>
         <strong>🔍 Debug Info:</strong>
-        <div style={{ marginTop: '10px' }}>
+        <div style={{ marginTop: '10px', fontFamily: 'monospace' }}>
           <div>✅ Logged in: {isAdminLoggedIn() ? 'Yes' : 'No'}</div>
-          <div>📦 Products loaded: {products ? products.length : 0}</div>
-          <div>💾 LocalStorage: {localStorage.getItem('luxvira_products') ? 'Has data' : 'Empty'}</div>
+          <div>📦 Products count: {Array.isArray(products) ? products.length : 'ERROR'}</div>
+          <div>💾 Storage: {debugInfo.rawStorage || 'Checking...'}</div>
+          <div>🎯 First product: {debugInfo.firstProduct || 'None'}</div>
         </div>
         <p style={{ margin: '10px 0 0', color: '#666' }}>
           Check browser console (F12) for detailed logs
@@ -457,13 +410,13 @@ export default function AdminDashboard() {
       {/* Products Table */}
       <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid #eee' }}>
-          <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({products ? products.length : 0})</h2>
+          <h2 style={{ margin: 0, color: '#333' }}>📦 All Products ({Array.isArray(products) ? products.length : 0})</h2>
         </div>
         {!products || products.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
             <p>No products yet. Click "Add New Product" to get started!</p>
             <p style={{ fontSize: '0.85rem', marginTop: '10px', color: '#999' }}>
-              Products are stored in localStorage
+              💡 Tip: Check the debug box above and browser console (F12)
             </p>
           </div>
         ) : (
