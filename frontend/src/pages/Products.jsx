@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { getProducts, isAdminLoggedIn } from '../utils/admin';
 
 // Default sample products (fallback if API fails)
 const DEFAULT_PRODUCTS = [
@@ -63,15 +62,18 @@ export default function Products() {
           
           if (dbProducts.length > 0) {
             setAllProducts(dbProducts);
+            setLoading(false); // ✅ Added: stop loading
             return;
           }
         }
         
         // Fallback to defaults if API fails
         setAllProducts(DEFAULT_PRODUCTS);
+        setLoading(false); // ✅ Added: stop loading
       } catch (err) {
         console.error('Failed to load from API:', err);
         setAllProducts(DEFAULT_PRODUCTS);
+        setLoading(false); // ✅ Added: stop loading even on error
       }
     };
     
