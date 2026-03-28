@@ -47,7 +47,7 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  // Auto-rotate each category slider
+  // Auto-rotate each category slider (by groups of 3)
   useEffect(() => {
     if (Object.keys(productsByCategory).length === 0) return;
     
@@ -55,11 +55,13 @@ export default function Home() {
     
     Object.keys(productsByCategory).forEach(category => {
       const products = productsByCategory[category];
-      if (products.length > 3) {
+      const totalSlides = Math.ceil(products.length / 3); // Groups of 3
+      
+      if (totalSlides > 1) {
         intervals[category] = setInterval(() => {
           setCurrentSlides(prev => ({
             ...prev,
-            [category]: (prev[category] + 1) % Math.max(1, products.length - 3)
+            [category]: (prev[category] + 1) % totalSlides
           }));
         }, 3000);
       }
@@ -70,17 +72,19 @@ export default function Home() {
 
   const nextSlide = (category) => {
     const products = productsByCategory[category];
+    const totalSlides = Math.ceil(products.length / 3);
     setCurrentSlides(prev => ({
       ...prev,
-      [category]: (prev[category] + 1) % Math.max(1, products.length - 3)
+      [category]: (prev[category] + 1) % totalSlides
     }));
   };
 
   const prevSlide = (category) => {
     const products = productsByCategory[category];
+    const totalSlides = Math.ceil(products.length / 3);
     setCurrentSlides(prev => ({
       ...prev,
-      [category]: (prev[category] - 1 + Math.max(1, products.length - 3)) % Math.max(1, products.length - 3)
+      [category]: (prev[category] - 1 + totalSlides) % totalSlides
     }));
   };
 
@@ -104,6 +108,7 @@ export default function Home() {
         const products = productsByCategory[category] || [];
         const slideIndex = currentSlides[category] || 0;
         const categoryColor = getCategoryColor(category);
+        const totalSlides = Math.ceil(products.length / 3); // Calculate total slides (groups of 3)
         
         return (
           <section key={category} style={{
@@ -133,6 +138,16 @@ export default function Home() {
                   fontWeight: '700'
                 }}>
                   {getCategoryEmoji(category)} {category}
+                  {products.length > 0 && (
+                    <span style={{
+                      fontSize: '0.85rem',
+                      color: '#999',
+                      fontWeight: '400',
+                      marginLeft: '10px'
+                    }}>
+                      ({products.length} products)
+                    </span>
+                  )}
                 </h2>
                 <Link
                   to={`/products?category=${category}`}
@@ -166,10 +181,10 @@ export default function Home() {
                       display: 'flex',
                       flexDirection: 'column'
                     }}>
-                      {/* Product Image - Better sizing */}
+                      {/* Product Image */}
                       <div style={{
                         position: 'relative',
-                        paddingTop: '75%', // 4:3 aspect ratio (better than 1:1)
+                        paddingTop: '75%',
                         overflow: 'hidden',
                         background: '#f9f9f9'
                       }}>
@@ -182,7 +197,7 @@ export default function Home() {
                             left: 0,
                             width: '100%',
                             height: '100%',
-                            objectFit: 'contain', // Show full product
+                            objectFit: 'contain',
                             padding: '10px'
                           }}
                         />
@@ -243,23 +258,25 @@ export default function Home() {
                       </div>
                     </div>
                   )) : (
-                    // Empty state
-                    <div style={{
-                      minWidth: 'calc(33.333% - 10px)',
-                      background: 'white',
-                      borderRadius: '10px',
-                      padding: '50px 20px',
-                      textAlign: 'center',
-                      boxShadow: '0 3px 12px rgba(0,0,0,0.1)'
-                    }}>
-                      <p style={{ color: '#999', margin: 0, fontSize: '0.95rem' }}>
-                        Products coming soon... 🎨
-                      </p>
-                    </div>
+                    // Empty state (3 placeholders)
+                    [1, 2, 3].map(i => (
+                      <div key={i} style={{
+                        minWidth: 'calc(33.333% - 10px)',
+                        background: 'white',
+                        borderRadius: '10px',
+                        padding: '50px 20px',
+                        textAlign: 'center',
+                        boxShadow: '0 3px 12px rgba(0,0,0,0.1)'
+                      }}>
+                        <p style={{ color: '#999', margin: 0, fontSize: '0.95rem' }}>
+                          Products coming soon... 🎨
+                        </p>
+                      </div>
+                    ))
                   )}
                 </div>
 
-                {/* Navigation Arrows */}
+                {/* Navigation Arrows - Only show if more than 3 products */}
                 {products.length > 3 && (
                   <>
                     <button
@@ -313,7 +330,7 @@ export default function Home() {
                   </>
                 )}
 
-                {/* Dots Indicator */}
+                {/* Dots Indicator - Only show if more than 3 products */}
                 {products.length > 3 && (
                   <div style={{
                     display: 'flex',
@@ -321,7 +338,7 @@ export default function Home() {
                     gap: '6px',
                     marginTop: '12px'
                   }}>
-                    {Array.from({ length: Math.max(1, products.length - 3) }).map((_, index) => (
+                    {Array.from({ length: totalSlides }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentSlides(prev => ({ ...prev, [category]: index }))}
